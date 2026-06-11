@@ -4,6 +4,28 @@
 
 ## 启动
 
+推荐使用一键启动脚本。脚本会检查 Python/SQLite 依赖，检测可选的 Node 前端语法检查，初始化数据库，关闭已启动的旧进程或占用端口的进程，然后重新启动服务。
+
+```bash
+scripts/start.sh
+```
+
+常用命令：
+
+```bash
+scripts/start.sh status
+scripts/start.sh stop
+scripts/start.sh restart
+```
+
+可通过环境变量指定地址和端口：
+
+```bash
+PORT=8099 HOST=127.0.0.1 scripts/start.sh
+```
+
+也可以直接启动后端服务：
+
 ```bash
 python3 backend/server.py
 ```
