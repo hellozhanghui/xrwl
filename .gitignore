@@ -1,0 +1,28 @@
+.DS_Store
+
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local virtual environments
+.venv/
+venv/
+env/
+
+# Local application data
+backend/data/*.sqlite
+backend/data/*.sqlite-*
+backend/uploads/
+
+# Local tooling state
+.codegraph/
+
+# Logs and temporary files
+*.log
+*.pid
+tmp/
+temp/

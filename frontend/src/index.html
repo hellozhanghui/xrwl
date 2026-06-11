@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>兴芮物流车辆管理系统</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <section id="login-screen" class="login-screen">
+      <form id="login-form" class="login-panel">
+        <div class="brand login-brand">
+          <strong>兴芮物流</strong>
+          <span>车辆管理系统</span>
+        </div>
+        <label>用户名<input name="username" value="admin" autocomplete="username"></label>
+        <label>密码<input name="password" type="password" value="admin123" autocomplete="current-password"></label>
+        <button type="submit">登录系统</button>
+        <p id="login-error"></p>
+      </form>
+    </section>
+
+    <div id="app-shell" class="app-shell hidden">
+      <aside class="sidebar">
+        <div class="brand">
+          <strong>兴芮物流</strong>
+          <span id="current-user">车辆管理系统</span>
+        </div>
+        <nav>
+          <button class="nav-item active" data-view="dashboard">总览</button>
+          <button class="nav-item" data-view="realtime-screen">实时大屏</button>
+          <button class="nav-item" data-view="vehicles">车辆档案</button>
+          <button class="nav-item" data-view="warning-preview">告警预览</button>
+          <button class="nav-item" data-view="orders">运输订单</button>
+          <button class="nav-item" data-view="dispatch">配货调度</button>
+          <button class="nav-item" data-view="tracking">轨迹设备</button>
+          <button class="nav-item" data-view="tickets">票据费用</button>
+          <button class="nav-item" data-view="workflow">工作流</button>
+          <button class="nav-item" data-view="reports">统计报表</button>
+          <button class="nav-item" data-view="admin">系统管理</button>
+        </nav>
+      </aside>
+
+      <main class="shell">
+        <header class="topbar">
+          <div>
+            <h1 id="page-title">总览</h1>
+            <p id="page-subtitle">车辆、订单、告警和调度状态</p>
+          </div>
+          <div class="actions">
+            <button id="refresh">刷新</button>
+            <button id="logout">退出</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="view active">
+          <div class="metrics" id="metrics"></div>
+          <div class="split">
+            <section>
+              <div class="section-title"><h2>实时车辆</h2></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>车牌</th><th>状态</th><th>速度</th><th>位置</th><th>时间</th></tr></thead>
+                  <tbody id="live-table"></tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <div class="section-title"><h2>开放告警</h2></div>
+              <div id="alerts" class="list"></div>
+            </section>
+          </div>
+          <div class="split">
+            <section>
+              <div class="section-title"><h2>车辆到期预警</h2></div>
+              <div id="vehicle-reminders" class="list"></div>
+            </section>
+            <section>
+              <div class="section-title"><h2>鸡苗运输要求</h2></div>
+              <div class="list">
+                <div class="item"><strong>最长运输时限</strong><span>单趟鸡苗运输预计时长不得超过 36 小时</span></div>
+                <div class="item"><strong>舱内环境</strong><span>温度 22-30 C，湿度 45%-75%，超限自动进入开放告警</span></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="realtime-screen" class="view big-screen-view">
+          <div class="screen-shell">
+            <div class="screen-head">
+              <div>
+                <span class="screen-kicker">REALTIME OPERATIONS</span>
+                <h2>兴芮物流运输态势大屏</h2>
+              </div>
+              <div class="screen-head-actions">
+                <div class="screen-clock" id="screen-clock">--:--:--</div>
+                <button id="screen-fullscreen" class="screen-fullscreen" type="button">全屏</button>
+              </div>
+            </div>
+            <div class="screen-kpis" id="screen-kpis"></div>
+            <div class="screen-layout">
+              <aside class="screen-panel">
+                <div class="screen-panel-title"><h3>运行概览</h3><span>Fleet Status</span></div>
+                <div class="screen-stack" id="screen-status-list"></div>
+                <div class="screen-panel-title"><h3>风险预警</h3><span>Alerts</span></div>
+                <div class="screen-stack" id="screen-alerts"></div>
+              </aside>
+              <section class="screen-map-panel">
+                <div class="screen-panel-title"><h3>实时导航</h3><span>车辆位置 / 多线路调度</span></div>
+                <div class="screen-map-stage" id="screen-map"></div>
+                <div class="screen-route-legend" id="screen-route-legend"></div>
+              </section>
+              <aside class="screen-panel">
+                <div class="screen-panel-title"><h3>在途车辆</h3><span>Live Vehicles</span></div>
+                <div class="screen-stack" id="screen-vehicle-list"></div>
+                <div class="screen-panel-title"><h3>执行订单</h3><span>Active Orders</span></div>
+                <div class="screen-stack" id="screen-orders"></div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section id="warning-preview" class="view">
+          <div class="section-title">
+            <h2>车辆档案告警预览</h2>
+            <div class="warning-legend">
+              <span class="legend-dot critical"></span>已超期
+              <span class="legend-dot warning"></span>7 天内到期
+              <span class="legend-dot attention"></span>90 天内关注
+            </div>
+          </div>
+          <div class="warning-summary" id="warning-summary"></div>
+          <div class="warning-grid" id="warning-preview-list"></div>
+        </section>
+
+        <section id="vehicles" class="view">
+          <div class="section-title">
+            <h2>车辆档案</h2>
+            <div class="actions">
+              <button data-form="vehicle">新增车辆</button>
+              <button id="export-vehicles" type="button">导出车辆档案</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>照片</th><th>车牌</th><th>车型</th><th>品牌型号</th><th>载重</th><th>容积</th><th>货箱</th><th>默认司机</th><th>组织</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="vehicle-table"></tbody>
+            </table>
+          </div>
+          <div class="split">
+            <section>
+              <div class="section-title"><h2>司机信息</h2><button data-form="vehicle-driver">新增司机</button></div>
+              <div id="vehicle-driver-list" class="list"></div>
+            </section>
+            <section>
+              <div class="section-title"><h2>维护保养</h2><button data-form="maintenance">新增维护</button></div>
+              <div id="maintenance-list" class="list"></div>
+            </section>
+          </div>
+          <div class="split">
+            <section>
+              <div class="section-title"><h2>证照保险税费</h2><button data-form="certificate">新增证照</button></div>
+              <div id="certificate-reminders" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="orders" class="view">
+          <div class="section-title">
+            <h2>运输订单</h2>
+            <div class="actions">
+              <button id="focus-planner" type="button">创建订单</button>
+              <button id="export-orders" type="button">导出运输订单</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>发货单号</th><th>货物</th><th>类型</th><th>重量</th><th>体积</th><th>车牌</th><th>单程</th><th>返程</th><th>计费公里</th><th>运费</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="order-table"></tbody>
+            </table>
+          </div>
+          <section id="order-planner-panel" class="planner-panel hidden">
+            <div class="section-title">
+              <h2>创建订单与路径规划</h2>
+              <div class="actions">
+                <button id="planner-back-list" type="button">返回列表</button>
+                <button id="planner-add-station" type="button">添加/插入站点</button>
+                <button id="planner-calc-route" type="button">创建订单并计算路线</button>
+              </div>
+            </div>
+            <div class="planner-grid">
+              <label>发货单号<input id="planner-order-no" placeholder="为空则自动生成"></label>
+              <label>货物名称<input id="planner-cargo-name" value="鸡苗"></label>
+              <label>货物类型<select id="planner-cargo-type"></select></label>
+              <label>重量(吨)<input id="planner-cargo-weight" type="number" step="any" readonly placeholder="选择车牌后自动生成"></label>
+              <label>体积(m3)<input id="planner-cargo-volume" type="number" step="any" readonly placeholder="选择车牌后自动生成"></label>
+              <label>车牌号<select id="planner-vehicle-id"></select></label>
+              <label>司机<select id="planner-driver-id"></select></label>
+              <label class="wide">订单描述<input id="planner-order-description" placeholder="填写本次运输批次、客户要求、注意事项等"></label>
+            </div>
+            <div class="planner-grid">
+              <label>站点类型<select id="planner-stop-type"><option value="waypoint">沿途点</option><option value="destination">终点</option></select></label>
+              <label>插入位置<select id="planner-insert-index"></select></label>
+              <label>省份<select id="planner-province"></select></label>
+              <label>城市<select id="planner-city"></select></label>
+              <label class="address-field">地名/地址
+                <input id="planner-address" placeholder="例如：桃城区物流园" autocomplete="off">
+                <div id="planner-address-suggestions" class="address-suggestions hidden"></div>
+              </label>
+              <label>显示名称<input id="planner-name" placeholder="默认使用地名"></label>
+              <label>地图服务<select id="planner-provider"><option value="tianditu">天地图</option><option value="mock">系统模拟</option></select></label>
+              <label>路线偏好<select id="planner-preference"><option value="highway">高速优先</option><option value="fastest">最快路线</option><option value="shortest">最短路线</option><option value="cost">费用优先</option></select></label>
+            </div>
+            <div class="planner-stations" id="planner-stations"></div>
+            <p id="planner-error"></p>
+          </section>
+          <div id="order-detail-panel" class="split hidden">
+            <section>
+              <div class="section-title"><h3>订单详情</h3><button id="detail-back-list" type="button">返回列表</button></div>
+              <div id="order-detail" class="list"></div>
+            </section>
+            <section>
+              <h3>变更记录</h3>
+              <div id="order-logs" class="list"></div>
+            </section>
+          </div>
+          <div class="map-panel hidden" id="order-map-panel"></div>
+        </section>
+
+        <section id="dispatch" class="view">
+          <div class="section-title">
+            <h2>车型配货</h2>
+            <button data-form="dispatch-match">按货物匹配</button>
+          </div>
+          <div id="dispatch-results" class="cards"></div>
+        </section>
+
+        <section id="tracking" class="view">
+          <div class="section-title">
+            <h2>轨迹与设备</h2>
+            <div class="actions">
+              <button data-form="device">新增设备</button>
+              <button data-form="gps-report">GPS 上报</button>
+              <button data-form="sensor-report">温湿度上报</button>
+              <button id="preview-live-map">实时预览</button>
+              <button id="preview-history-map">历史轨迹</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>设备编号</th><th>类型</th><th>协议</th><th>车辆</th><th>状态</th><th>电量</th><th>最后在线</th></tr></thead>
+              <tbody id="device-table"></tbody>
+            </table>
+          </div>
+          <div id="order-pagination" class="pagination"></div>
+          <div class="map-panel" id="map-panel"></div>
+        </section>
+
+        <section id="tickets" class="view">
+          <div class="section-title">
+            <h2>票据费用</h2>
+            <div class="actions">
+              <button data-form="ticket">新增票据</button>
+              <button id="export-tickets" type="button">导出票据费用</button>
+            </div>
+          </div>
+          <div class="filters">
+            <label>车牌<input id="ticket-filter-plate" placeholder="输入车牌"></label>
+            <label>司机<input id="ticket-filter-driver" placeholder="输入司机"></label>
+            <label>类型<select id="ticket-filter-type"><option value="">全部类型</option><option value="toll">过路费</option><option value="fuel">燃油费</option><option value="repair">维修费</option><option value="insurance">保险费</option><option value="tax">税费</option><option value="invoice">发票</option><option value="未提交">未提交</option></select></label>
+            <label>开始日期<input id="ticket-filter-start" type="date"></label>
+            <label>结束日期<input id="ticket-filter-end" type="date"></label>
+            <button id="ticket-filter-apply" type="button">查询</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>订单</th><th>车辆</th><th>司机</th><th>类型</th><th>金额</th><th>计费公里</th><th>票据号</th><th>日期</th><th>状态</th><th>驳回原因</th><th>操作</th></tr></thead>
+              <tbody id="ticket-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="workflow" class="view">
+          <div class="section-title">
+            <h2>工作流中心</h2>
+          </div>
+          <div class="split">
+            <section>
+              <h3>整体工作流图示</h3>
+              <div id="workflow-graph" class="list"></div>
+            </section>
+            <section>
+              <h3>流程定义</h3>
+              <div id="workflow-definitions" class="list"></div>
+            </section>
+          </div>
+          <div class="section-title">
+            <h2>流程实例</h2>
+          </div>
+          <div id="workflow-instances" class="list"></div>
+        </section>
+
+        <section id="reports" class="view">
+          <div class="section-title">
+            <h2>统计报表</h2>
+            <button data-form="pricing-estimate">运费测算</button>
+          </div>
+          <div class="chart-grid">
+            <section><h3>订单状态分布</h3><div id="chart-order-status" class="chart-box"></div></section>
+            <section><h3>车辆状态分布</h3><div id="chart-vehicle-status" class="chart-box"></div></section>
+            <section><h3>票据类型金额</h3><div id="chart-ticket-type" class="chart-box"></div></section>
+            <section><h3>费用趋势</h3><div id="chart-fee-trend" class="chart-box"></div></section>
+          </div>
+          <div class="split">
+            <section><h3>车辆利用率</h3><div id="utilization" class="list"></div></section>
+            <section><h3>订单公里数</h3><div id="distance-report" class="list"></div></section>
+          </div>
+          <div class="split">
+            <section><h3>测算结果</h3><div id="pricing-estimate-result" class="list"></div></section>
+            <section><h3>运价规则</h3><div id="freight-rates" class="list"></div></section>
+          </div>
+        </section>
+
+        <section id="admin" class="view">
+          <div class="section-title">
+            <h2>系统管理</h2>
+            <div class="actions">
+              <button data-form="system-settings">默认起点/计价设置</button>
+              <button data-form="freight-rate">车型运价</button>
+              <button data-form="map-config">地图配置</button>
+              <button data-form="vendor-adapter">设备厂商</button>
+            </div>
+          </div>
+          <div class="split">
+            <section>
+              <h3>用户与角色</h3>
+              <div class="table-wrap compact">
+                <table>
+                  <thead><tr><th>账号</th><th>姓名</th><th>电话</th><th>角色</th><th>状态</th></tr></thead>
+                  <tbody id="user-table"></tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h3>地图与设备适配</h3>
+              <div id="config-list" class="list"></div>
+            </section>
+            <section>
+              <h3>签章上传</h3>
+              <div class="list">
+                <div class="item">
+                  <strong>红章/镂空图片</strong>
+                  <span>支持透明 PNG，上传后用于票据凭证打印签章</span>
+                  <div class="actions">
+                    <input id="seal-upload" type="file" accept="image/png">
+                  </div>
+                </div>
+                <div id="seal-preview" class="item"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="form-dialog">
+      <form id="dynamic-form" method="dialog">
+        <div class="dialog-head">
+          <h2 id="dialog-title">信息维护</h2>
+          <button type="button" id="dialog-close">关闭</button>
+        </div>
+        <div id="form-fields" class="form-grid"></div>
+        <p id="form-error"></p>
+        <div class="dialog-actions">
+          <button type="button" id="form-cancel">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
